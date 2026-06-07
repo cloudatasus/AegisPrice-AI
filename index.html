@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>🛡️ AegisPrice AI - C-Suite 企業戰略決策大腦</title>
+    <style>
+        :root {
+            --bg-main: #020617;
+            --bg-card: #0f172a;
+            --bg-side: #0b0f19;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #64748b;
+            --border: #1e293b;
+        }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-main); color: var(--text-main); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        /* 頂部導覽 */
+        .top-nav { background: var(--bg-side); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0.8rem 2rem; gap: 1rem; flex-shrink: 0; overflow-x: auto; }
+        .brand-zone { display: flex; align-items: center; gap: 0.6rem; margin-right: 1.5rem; white-space: nowrap; }
+        .brand-zone h1 { margin: 0; font-size: 1.2rem; font-weight: 800; color: white; }
+        .brand-zone p { display: none; }
+        .slide-nav-list { display: flex; gap: 0.5rem; align-items: center; }
+        .nav-item { background: transparent; color: var(--text-muted); border: 1px solid transparent; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; text-align: center; font-weight: 600; font-size: 0.8rem; transition: all 0.2s ease; white-space: nowrap; }
+        .nav-item:hover { background: #131b2e; color: var(--text-main); }
+        .nav-item.active-nav { background: #1e293b; color: #38bdf8; border-color: #334155; }
+        .nav-item span { display: none; }
+
+        /* 主區域 */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .top-bar { height: 65px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; background: #070a13; }
+        .top-bar-title { font-weight: 800; font-size: 1.1rem; color: white; }
+        .top-bar .tag { font-size: 0.75rem; color: var(--accent); font-weight: 600; }
+        .viewport { flex: 1; padding: 2.5rem; overflow-y: auto; box-sizing: border-box; }
+
+        /* Slide 共用 */
+        .slide-view { display: none; animation: fadeIn 0.4s ease forwards; }
+        .slide-view.active-view { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-view h2 { margin-top: 0; font-size: 1.7rem; font-weight: 800; color: white; margin-bottom: 0.8rem; }
+        .slide-view .subtitle { color: #94a3b8; font-size: 1.15rem; margin-bottom: 1.8rem; max-width: 850px; }
+
+        /* 痛點卡片 */
+        .pain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; margin-top: 1rem; }
+        .pain-card { background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--danger); border-radius: 12px; padding: 1.5rem; }
+        .pain-card h4 { margin: 0 0 0.6rem 0; color: #fca5a5; font-size: 1rem; }
+        .pain-card p { margin: 0; color: #cbd5e1; font-size: 0.9rem; line-height: 1.6; }
+        .pain-card .stat { margin-top: 0.8rem; font-size: 0.8rem; color: var(--warning); font-weight: 600; }
+
+        /* 爽點卡片 */
+        .value-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; margin-top: 1rem; }
+        .value-card { background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--success); border-radius: 12px; padding: 1.5rem; }
+        .value-card h4 { margin: 0 0 0.6rem 0; color: #6ee7b7; font-size: 1rem; }
+        .value-card p { margin: 0; color: #cbd5e1; font-size: 0.9rem; line-height: 1.6; }
+        .value-card .metric { margin-top: 0.8rem; font-size: 0.8rem; color: var(--success); font-weight: 600; }
+
+        /* 技術架構 */
+        .tech-points { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+        .tech-point { background: var(--bg-main); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+        .tech-point h5 { margin: 0 0 0.4rem 0; color: #818cf8; font-size: 0.95rem; }
+        .tech-point p { margin: 0; color: #94a3b8; font-size: 0.9rem; line-height: 1.5; }
+
+        /* PoC 控制台 */
+        .dashboard-grid { display: grid; grid-template-columns: 260px 1fr; gap: 1.5rem; background: var(--bg-card); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); margin-top: 1rem; }
+        .control-panel { background: var(--bg-main); padding: 1rem; border-radius: 12px; display: flex; flex-direction: column; gap: 0.8rem; border: 1px solid var(--border); }
+        .control-panel h4 { margin: 0; color: #38bdf8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .display-panel { display: flex; flex-direction: column; gap: 1rem; }
+        .status-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .status-box { background: var(--bg-main); padding: 1rem; border-radius: 10px; border: 1px solid var(--border); border-left: 4px solid #475569; }
+        .status-box.alert-border { border-left-color: var(--danger); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .status-box div { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.2rem; }
+        .status-box span { font-size: 1.2rem; font-weight: 800; color: white; }
+        .log-box { background: #010205; padding: 1rem; border-radius: 10px; font-family: monospace; font-size: 0.8rem; color: #38bdf8; height: 120px; overflow-y: auto; border: 1px solid var(--border); }
+        .action-box { background: var(--bg-main); border: 1px dashed #475569; padding: 1.2rem; border-radius: 10px; display: none; }
+        .action-box h5 { margin: 0 0 0.4rem 0; font-size: 1rem; color: var(--success); font-weight: 700; }
+        .action-box p { color: #cbd5e1; font-size: 0.88rem; line-height: 1.5; }
+        .scale-box { background: #0f0b29; border: 1px solid #3b3187; padding: 1.2rem; border-radius: 10px; display: none; }
+        .scale-box h5 { margin: 0 0 0.5rem 0; font-size: 1rem; color: #818cf8; font-weight: 700; }
+        .scale-box ul { margin: 0; padding-left: 1.2rem; font-size: 0.88rem; color: #cbd5e1; line-height: 1.6; }
+        .btn { background: #1e293b; color: #cbd5e1; border: 1px solid var(--border); padding: 0.75rem; border-radius: 8px; cursor: pointer; font-weight: 600; text-align: left; font-size: 0.83rem; transition: all 0.2s; }
+        .btn:hover { background: #334155; color: white; }
+        .btn.active-btn { background: var(--accent); color: white; border-color: var(--accent); }
+        .approve-btn { background: var(--success); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 0.8rem; font-size: 0.88rem; }
+        .approve-btn:hover { background: #059669; }
+
+        /* 流程對照表 */
+        .compare-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+        .compare-table th { background: #1e293b; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem 1rem; text-align: left; }
+        .compare-table td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); color: #cbd5e1; font-size: 0.88rem; }
+        .compare-table tr:hover td { background: #0f172a; }
+        .old { color: #fca5a5; }
+        .new { color: #6ee7b7; }
+
+        /* 全頁動態效果 */
+        .slide-view h2{animation:fadeDown 0.5s ease;}
+        .slide-view .subtitle{animation:fadeDown 0.6s ease;}
+        @keyframes fadeDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+
+        /* 摘要頁卡片 */
+        .slide-view div[style*="border-radius:8px"]{transition:all 0.2s ease;}
+        .slide-view div[style*="border-radius:8px"]:hover{transform:translateX(4px);filter:brightness(1.15);}
+
+        /* 痛點/爽點大卡片 hover */
+        .slide-view div[style*="border-radius:14px"]{transition:all 0.3s ease;opacity:0;animation:cardIn 0.5s ease forwards;}
+        .slide-view div[style*="border-radius:14px"]:nth-child(1){animation-delay:0.1s;}
+        .slide-view div[style*="border-radius:14px"]:nth-child(2){animation-delay:0.2s;}
+        .slide-view div[style*="border-radius:14px"]:nth-child(3){animation-delay:0.3s;}
+        .slide-view div[style*="border-radius:14px"]:nth-child(4){animation-delay:0.4s;}
+        .slide-view div[style*="border-radius:14px"]:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.4);}
+        @keyframes cardIn{from{opacity:0;transform:translateY(15px);}to{opacity:1;transform:translateY(0);}}
+
+        /* 技術架構頁卡片 */
+        .tech-point{transition:all 0.3s ease;opacity:0;animation:cardIn 0.4s ease forwards;}
+        .tech-point:nth-child(1){animation-delay:0.1s;}
+        .tech-point:nth-child(2){animation-delay:0.2s;}
+        .tech-point:nth-child(3){animation-delay:0.3s;}
+        .tech-point:nth-child(4){animation-delay:0.4s;}
+        .tech-point:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,0.3);border-color:#334155;}
+
+        /* 技術架構 Agent/MCP 卡片 hover */
+        .slide-view div[style*="border-radius:12px"]{transition:all 0.3s ease;}
+        .slide-view div[style*="border-radius:12px"]:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 6px 20px rgba(0,0,0,0.35);}
+
+        /* nav 按鈕動態 */
+        .nav-item{transition:all 0.2s ease;}
+        .nav-item:hover{transform:translateY(-1px);}
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <div class="brand-zone"><h1>🛡️ AegisPrice AI</h1></div>
+        <div class="slide-nav-list">
+            <button class="nav-item active-nav" onclick="switchSlide(0)">摘要</button>
+            <button class="nav-item" onclick="switchSlide(1)">痛點</button>
+            <button class="nav-item" onclick="switchSlide(2)">爽點</button>
+            <button class="nav-item" onclick="switchSlide(3)">技術架構</button>
+            <button class="nav-item" onclick="switchSlide(4)">防禦防線</button>
+            <button class="nav-item" onclick="switchSlide(5)">應用場景</button>
+            <button class="nav-item" onclick="switchSlide(6)">PoC Demo</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="top-bar-title" id="top-title">01 . 項目摘要</div>
+            <div class="tag">AGENTIC AI BLACKHATHON 2026</div>
+        </div>
+
+        <div class="viewport">
+            <!-- Slide 0: 摘要 -->
+            <div class="slide-view active-view" id="slide-0">
+                <h2>AegisPrice AI —— 從「定價決策」到「產品定義」的 AI 商業大腦</h2>
+                <p class="subtitle">過去的思維：研發做完產品 → 財務定價 → 業務流血促銷（資訊單向流動，容易失敗）。<br>我們的 Agentic 思維：Agent 動態定價 → 探測市場價格彈性與痛點 → 反向指導 R&D 研發下一個爆款產品（形成閉環生態圈）。</p>
+
+                <div style="background:linear-gradient(135deg,#0f172a,#1e1b4b);border:1px solid #334155;border-radius:16px;padding:2rem;margin-bottom:1.5rem;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+                        <div>
+                            <div style="color:#fca5a5;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.8rem;">❌ 傳統決策流程</div>
+                            <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                                <div style="background:#1c1017;border:1px solid #7f1d1d;border-radius:8px;padding:0.8rem;"><span style="color:#fca5a5;font-weight:600;">成本感知</span><span style="color:#94a3b8;font-size:0.85rem;margin-left:0.5rem;">月結報表，滯後 2~4 週</span></div>
+                                <div style="background:#1c1017;border:1px solid #7f1d1d;border-radius:8px;padding:0.8rem;"><span style="color:#fca5a5;font-weight:600;">促銷策略</span><span style="color:#94a3b8;font-size:0.85rem;margin-left:0.5rem;">粗暴打折，通路衝突，品牌貶值</span></div>
+                                <div style="background:#1c1017;border:1px solid #7f1d1d;border-radius:8px;padding:0.8rem;"><span style="color:#fca5a5;font-weight:600;">新品研發</span><span style="color:#94a3b8;font-size:0.85rem;margin-left:0.5rem;">主觀想像，80% 滯銷報廢</span></div>
+                                <div style="background:#1c1017;border:1px solid #7f1d1d;border-radius:8px;padding:0.8rem;"><span style="color:#fca5a5;font-weight:600;">知識傳承</span><span style="color:#94a3b8;font-size:0.85rem;margin-left:0.5rem;">人走經驗散，每次從零學起</span></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="color:#6ee7b7;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.8rem;">✓ AegisPrice AI</div>
+                            <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                                <div style="background:#0f2920;border:1px solid #065f46;border-radius:8px;padding:0.8rem;"><span style="color:#6ee7b7;font-weight:600;">成本感知</span><span style="color:#94a3b8;font-size:0.85rem;margin-left:0.5rem;">分鐘級自動感知 + 即時熔斷</span></div>
+                                <div style="background:#0f2920;border:1px solid #065f46;border-radius:8px;padding:0.8rem;"><span style="color:#6ee7b7;font-weight:600;">促銷策略</span><span style="color:#94a3b8;font-size:0.85rem;margin-left:0.5rem;">隱蔽式加值綑綁，零邊際成本吸收</span></div>
+                                <div style="background:#0f2920;border:1px solid #065f46;border-radius:8px;padding:0.8rem;"><span style="color:#6ee7b7;font-weight:600;">新品研發</span><span style="color:#94a3b8;font-size:0.85rem;margin-left:0.5rem;">從異常數據反向破局，出廠即爆款</span></div>
+                                <div style="background:#0f2920;border:1px solid #065f46;border-radius:8px;padding:0.8rem;"><span style="color:#6ee7b7;font-weight:600;">知識傳承</span><span style="color:#94a3b8;font-size:0.85rem;margin-left:0.5rem;">決策自動存入 RAG，越用越聰明</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align:center;color:#64748b;font-size:0.8rem;">底層框架可無縫複製至智慧汽車、消費性電子與醫療器材等數兆美元規模產業</div>
+            </div>
+
+            <!-- Slide 1: 痛點全 -->
+            <div class="slide-view" id="slide-1">
+                <h2>行業結構痛點：為什麼企業持續失血？</h2>
+                <p class="subtitle">上游成本變動大、通路多維、迭代快、組織無記憶——四重結構性困境。</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;">
+                    <div style="background:linear-gradient(180deg,#1c1017,#0f0a0d);border:1px solid #7f1d1d;border-radius:14px;padding:1.4rem;">
+                        <div style="font-size:1.5rem;margin-bottom:0.3rem;">📉</div>
+                        <div style="color:#fca5a5;font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;">成本與售價脫鉤</div>
+                        <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.6;margin:0;">原料<strong>日頻變動</strong>，財務月結核算，毛利破防數週後才察覺。</p>
+                        <div style="margin-top:0.6rem;color:#f59e0b;font-size:0.82rem;font-weight:600;">📊 平均 18 天才感知影響</div>
+                    </div>
+                    <div style="background:linear-gradient(180deg,#1c1017,#0f0a0d);border:1px solid #7f1d1d;border-radius:14px;padding:1.4rem;">
+                        <div style="font-size:1.5rem;margin-bottom:0.3rem;">💔</div>
+                        <div style="color:#fca5a5;font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;">通路衝突與品牌崩壞</div>
+                        <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.6;margin:0;">只會<strong>流血打折</strong>，經銷商抗議，品牌錨定一旦崩壞需 2~3 年修復。</p>
+                        <div style="margin-top:0.6rem;color:#f59e0b;font-size:0.82rem;font-weight:600;">📊 降價 20%+ 品牌價值 -12%</div>
+                    </div>
+                    <div style="background:linear-gradient(180deg,#1c1017,#0f0a0d);border:1px solid #7f1d1d;border-radius:14px;padding:1.4rem;">
+                        <div style="font-size:1.5rem;margin-bottom:0.3rem;">🎲</div>
+                        <div style="color:#fca5a5;font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;">研發與市場脫節</div>
+                        <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.6;margin:0;">R&D <strong>憑主觀想像</strong>，80% 新品不到一季滯銷報廢。</p>
+                        <div style="margin-top:0.6rem;color:#f59e0b;font-size:0.82rem;font-weight:600;">📊 新品 1 年存活率僅 20%</div>
+                    </div>
+                    <div style="background:linear-gradient(180deg,#1c1017,#0f0a0d);border:1px solid #7f1d1d;border-radius:14px;padding:1.4rem;">
+                        <div style="font-size:1.5rem;margin-bottom:0.3rem;">🧠</div>
+                        <div style="color:#fca5a5;font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;">決策無法傳承</div>
+                        <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.6;margin:0;"><strong>組織沒有記憶</strong>，成功經驗存在某人 Excel 或離職帶走。</p>
+                        <div style="margin-top:0.6rem;color:#f59e0b;font-size:0.82rem;font-weight:600;">📊 72% 企業決策知識集中少數人腦中</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: 爽點全 -->
+            <div class="slide-view" id="slide-2">
+                <h2>AegisPrice AI 如何創造價值？</h2>
+                <p class="subtitle">智能推演 → 策略推薦 → Human-in-the-Loop 嚴謹落地。</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;">
+                    <div style="background:linear-gradient(180deg,#0f2920,#071a14);border:1px solid #065f46;border-radius:14px;padding:1.4rem;">
+                        <div style="font-size:1.5rem;margin-bottom:0.3rem;">⏱️</div>
+                        <div style="color:#6ee7b7;font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;">精準利潤防禦</div>
+                        <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.6;margin:0;"><strong>分鐘級</strong>感知成本波動，熔斷機制禁止降價，自動移交策略推演。</p>
+                        <div style="margin-top:0.6rem;color:#10b981;font-size:0.85rem;font-weight:700;">決策反應：18 天 → 3 分鐘</div>
+                    </div>
+                    <div style="background:linear-gradient(180deg,#0f2920,#071a14);border:1px solid #065f46;border-radius:14px;padding:1.4rem;">
+                        <div style="font-size:1.5rem;margin-bottom:0.3rem;">💰</div>
+                        <div style="color:#6ee7b7;font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;">隱蔽式價值極大化</div>
+                        <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.6;margin:0;"><strong>不動售價</strong>，用零邊際成本服務綑綁吸收衝擊，通路不衝突。</p>
+                        <div style="margin-top:0.6rem;color:#10b981;font-size:0.85rem;font-weight:700;">官網轉化率 +45%，毛利補回</div>
+                    </div>
+                    <div style="background:linear-gradient(180deg,#0f2920,#071a14);border:1px solid #065f46;border-radius:14px;padding:1.4rem;">
+                        <div style="font-size:1.5rem;margin-bottom:0.3rem;">🎯</div>
+                        <div style="color:#6ee7b7;font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;">反向工程指導研發</div>
+                        <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.6;margin:0;">從失敗數據<strong>反思</strong>，爬取輿情挖掘真空帶，自動生成新品 PRD。</p>
+                        <div style="margin-top:0.6rem;color:#10b981;font-size:0.85rem;font-weight:700;">新品成功率 3 倍提升</div>
+                    </div>
+                    <div style="background:linear-gradient(180deg,#0f2920,#071a14);border:1px solid #065f46;border-radius:14px;padding:1.4rem;">
+                        <div style="font-size:1.5rem;margin-bottom:0.3rem;">🧠</div>
+                        <div style="color:#6ee7b7;font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;">永續組織記憶</div>
+                        <p style="color:#cbd5e1;font-size:0.9rem;line-height:1.6;margin:0;">核准後自動存入 RAG 記憶庫，下次危機<strong>站在前人肩膀上決策</strong>。</p>
+                        <div style="margin-top:0.6rem;color:#10b981;font-size:0.85rem;font-weight:700;">智慧不隨人員流動流失</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Slide 3: 技術 -->
+            <div class="slide-view" id="slide-3">
+                <h2>技術實現：MCP 數據治理 + RAG 組織記憶</h2>
+                <p class="subtitle">以 LangGraph Multi-Agent 為核心，透過 MCP 協議解耦數據源，RAG 實現組織知識永續滾動。</p>
+
+                <!-- 視覺化架構圖 -->
+                <div style="background:linear-gradient(135deg,#0f172a,#1e1b4b);border:1px solid #334155;border-radius:16px;padding:2rem;margin-bottom:1.5rem;">
+                    <!-- Agent 層 -->
+                    <div style="text-align:center;margin-bottom:0.5rem;font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;">LangGraph Multi-Agent 協作網絡</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+                        <div style="background:linear-gradient(180deg,#1e3a5f,#0f2942);border:1px solid #2563eb;border-radius:12px;padding:1.2rem;text-align:center;">
+                            <div style="font-size:1.8rem;margin-bottom:0.4rem;">🔍</div>
+                            <div style="color:#60a5fa;font-weight:700;font-size:0.85rem;">溯源成本分析 Agent</div>
+                            <div style="color:#94a3b8;font-size:0.75rem;margin-top:0.3rem;">昨日：監控預警 & 熔斷</div>
+                        </div>
+                        <div style="background:linear-gradient(180deg,#1a3d2e,#0f2920);border:1px solid #10b981;border-radius:12px;padding:1.2rem;text-align:center;">
+                            <div style="font-size:1.8rem;margin-bottom:0.4rem;">⚡</div>
+                            <div style="color:#6ee7b7;font-weight:700;font-size:0.85rem;">即時價值極大化 Agent</div>
+                            <div style="color:#94a3b8;font-size:0.75rem;margin-top:0.3rem;">今日：策略推薦 & 部署</div>
+                        </div>
+                        <div style="background:linear-gradient(180deg,#2d1b4e,#1a0f33);border:1px solid #a78bfa;border-radius:12px;padding:1.2rem;text-align:center;">
+                            <div style="font-size:1.8rem;margin-bottom:0.4rem;">🎯</div>
+                            <div style="color:#c4b5fd;font-weight:700;font-size:0.85rem;">反向預測 Agent</div>
+                            <div style="color:#94a3b8;font-size:0.75rem;margin-top:0.3rem;">明日：新品 PRD 生成</div>
+                        </div>
+                    </div>
+                    <!-- 連接箭頭 -->
+                    <div style="text-align:center;color:#475569;font-size:1.2rem;margin-bottom:0.3rem;">▼ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ▼ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ▼</div>
+                    <div style="text-align:center;background:#1e293b;border:1px dashed #475569;border-radius:8px;padding:0.5rem;margin-bottom:0.8rem;color:#94a3b8;font-size:0.75rem;font-weight:600;">MCP 協議層 — Model Context Protocol（數據源完全解耦，杜絕 LLM 數學幻覺）</div>
+                    <div style="text-align:center;color:#475569;font-size:1.2rem;margin-bottom:0.3rem;">▼ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ▼ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ▼</div>
+                    <!-- MCP Server 層 -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+                        <div style="background:#020617;border:1px solid #1e293b;border-radius:10px;padding:1rem;text-align:center;">
+                            <div style="color:#f59e0b;font-weight:700;font-size:0.8rem;">MCP Server 1</div>
+                            <div style="color:white;font-size:0.85rem;font-weight:600;margin:0.3rem 0;">ERP / 期貨 API</div>
+                            <div style="color:#64748b;font-size:0.72rem;">100% 結構化數學計算</div>
+                        </div>
+                        <div style="background:#020617;border:1px solid #1e293b;border-radius:10px;padding:1rem;text-align:center;">
+                            <div style="color:#f59e0b;font-weight:700;font-size:0.8rem;">MCP Server 2</div>
+                            <div style="color:white;font-size:0.85rem;font-weight:600;margin:0.3rem 0;">Shopify / Omnisend</div>
+                            <div style="color:#64748b;font-size:0.72rem;">工具自動調用 & 部署</div>
+                        </div>
+                        <div style="background:#020617;border:1px solid #1e293b;border-radius:10px;padding:1rem;text-align:center;">
+                            <div style="color:#f59e0b;font-weight:700;font-size:0.8rem;">MCP Server 3</div>
+                            <div style="color:white;font-size:0.85rem;font-weight:600;margin:0.3rem 0;">RAG 向量記憶庫</div>
+                            <div style="color:#64748b;font-size:0.72rem;">ChromaDB 語意檢索</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 四要點 -->
+                <div class="tech-points">
+                    <div class="tech-point">
+                        <h5>MCP — Model Context Protocol</h5>
+                        <p>採最新大模型開放標準，將數據源與工具徹底解耦。成本計算走 100% 結構化 SQL，杜絕 LLM 幻覺。核准後自動調用 Shopify API 上架、Omnisend API 推播。</p>
+                    </div>
+                    <div class="tech-point">
+                        <h5>RAG — 雙重向量記憶機制</h5>
+                        <p><strong>未來創新漏斗</strong>：爬取 Threads/Dcard 輿情向量化，提煉消費者真實怨念。<strong>歷史決策記憶</strong>：每次核准後自動存入 ChromaDB，下次危機優先檢索歷史經驗。</p>
+                    </div>
+                    <div class="tech-point">
+                        <h5>Human-in-the-Loop</h5>
+                        <p>所有 Agent 方案僅為「推薦」，必須經主管核准才會執行部署。利潤底線寫死硬熔斷，Agent 僅有讀取權，無修改價格權限。</p>
+                    </div>
+                    <div class="tech-point">
+                        <h5>100% 本地化部署</h5>
+                        <p>支援對接私有 Llama 3，商業機密完全不上雲。輸入端架設 Llama Guard 護欄，防禦 Prompt Injection 攻擊。</p>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Slide 4: 企業級防禦防線 -->
+            <div class="slide-view" id="slide-4">
+                <h2>企業級防禦防線</h2>
+                <p class="subtitle">系統讀取供應鏈成本、ERP 庫存與消費者數據——資安設計是能否落地的關鍵。</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem;">
+                    <!-- 第一道：資料保護 -->
+                    <div style="background:linear-gradient(180deg,#1a1025,#0f0a18);border:1px solid #6d28d9;border-radius:14px;padding:1.5rem;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px rgba(109,40,217,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                        <div style="font-size:1.5rem;margin-bottom:0.4rem;">🔒</div>
+                        <div style="color:#c4b5fd;font-weight:700;font-size:1.0rem;margin-bottom:0.5rem;">資料保護與敏感隔離</div>
+                        <ul style="color:#94a3b8;font-size:0.85rem;line-height:1.8;padding-left:1rem;margin:0;">
+                            <li><strong style="color:#cbd5e1;">去識別化</strong>：PII（姓名/Email/卡號）在本地端以 Hashing/Masking 過濾後才送入 LLM</li>
+                            <li><strong style="color:#cbd5e1;">企業級 API</strong>：使用 Azure OpenAI / AWS Bedrock，數據不會被用於微調公共模型</li>
+                            <li><strong style="color:#cbd5e1;">商業機密</strong>：完全不上公共雲，支援 100% On-Premise 部署</li>
+                        </ul>
+                    </div>
+                    <!-- 第二道：權限控管 -->
+                    <div style="background:linear-gradient(180deg,#1a1025,#0f0a18);border:1px solid #6d28d9;border-radius:14px;padding:1.5rem;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px rgba(109,40,217,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                        <div style="font-size:1.5rem;margin-bottom:0.4rem;">🛑</div>
+                        <div style="color:#c4b5fd;font-weight:700;font-size:1.0rem;margin-bottom:0.5rem;">權限控管與熔斷機制</div>
+                        <ul style="color:#94a3b8;font-size:0.85rem;line-height:1.8;padding-left:1rem;margin:0;">
+                            <li><strong style="color:#cbd5e1;">RBAC</strong>：Hunter Agent <span style="color:#fca5a5;">唯讀</span>，無法修改價格</li>
+                            <li><strong style="color:#cbd5e1;">Guardrails</strong>：定價 <span style="color:#ef4444;">≥ BOM × 105%</span>，違反自動攔截</li>
+                            <li><strong style="color:#cbd5e1;">Human-in-the-Loop</strong>：變動 >30% → 暫停 → Slack/Teams 等主管 Approve</li>
+                        </ul>
+                    </div>
+                    <!-- 第三道：風險防範 -->
+                    <div style="background:linear-gradient(180deg,#1a1025,#0f0a18);border:1px solid #6d28d9;border-radius:14px;padding:1.5rem;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px rgba(109,40,217,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                        <div style="font-size:1.5rem;margin-bottom:0.4rem;">🧱</div>
+                        <div style="color:#c4b5fd;font-weight:700;font-size:1.0rem;margin-bottom:0.5rem;">防範 Agent 暴走</div>
+                        <ul style="color:#94a3b8;font-size:0.85rem;line-height:1.8;padding-left:1rem;margin:0;">
+                            <li><strong style="color:#cbd5e1;">Prompt Injection 防禦</strong>：輸入端架設 Llama Guard 護欄</li>
+                            <li><strong style="color:#cbd5e1;">防惡意操控</strong>：阻止消費者透過購物車竄改或惡意評論誘導 Agent 賤賣</li>
+                            <li><strong style="color:#cbd5e1;">異常行為偵測</strong>：Agent 輸出若偏離歷史決策分佈則自動凍結</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: 商業化應用場景 -->
+            <div class="slide-view" id="slide-5">
+                <h2>規模化商業應用：跨產業落地場景</h2>
+                <p class="subtitle">洋芋片只是 PoC 驗證。AegisPrice AI 的核心架構可無縫複製至所有「上游成本波動 + 通路多元 + 迭代快」的產業。</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;">
+                    <div style="background:linear-gradient(180deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:14px;padding:1.5rem;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                        <div style="font-size:1.5rem;margin-bottom:0.4rem;">💄</div>
+                        <div style="color:#f0abfc;font-weight:700;font-size:1.05rem;">美妝保養品</div>
+                        <p style="color:#cbd5e1;font-size:0.92rem;line-height:1.6;margin:0.5rem 0 0 0;">活性成分/油脂成本波動 → 季節限定綑綁包策略<br>「成分黨」輿情爬蟲 → 反向定義下一季明星成分</p>
+                    </div>
+                    <div style="background:linear-gradient(180deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:14px;padding:1.5rem;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                        <div style="font-size:1.5rem;margin-bottom:0.4rem;">🧋</div>
+                        <div style="color:#fbbf24;font-weight:700;font-size:1.05rem;">手搖飲料連鎖</div>
+                        <p style="color:#cbd5e1;font-size:0.92rem;line-height:1.6;margin:0.5rem 0 0 0;">茶葉/鮮奶日頻波動 → 即時毛利熔斷<br>外送平台抽成擠壓 → 自有 App 會員綑綁加值策略</p>
+                    </div>
+                    <div style="background:linear-gradient(180deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:14px;padding:1.5rem;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                        <div style="font-size:1.5rem;margin-bottom:0.4rem;">🎧</div>
+                        <div style="color:#60a5fa;font-weight:700;font-size:1.05rem;">消費性電子配件</div>
+                        <p style="color:#cbd5e1;font-size:0.92rem;line-height:1.6;margin:0.5rem 0 0 0;">晶片/銅材/塑膠粒成本聯動 → 軟體訂閱綑綁吸收漲幅<br>蝦皮/Momo/官網多通路 → 隱蔽式差異定價不衝突</p>
+                    </div>
+                    <div style="background:linear-gradient(180deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:14px;padding:1.5rem;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                        <div style="font-size:1.5rem;margin-bottom:0.4rem;">👗</div>
+                        <div style="color:#fb923c;font-weight:700;font-size:1.05rem;">快時尚服飾</div>
+                        <p style="color:#cbd5e1;font-size:0.92rem;line-height:1.6;margin:0.5rem 0 0 0;">棉花/化纖/染料成本 + 運費 → 即時 BOM 重算<br>2 週上新節奏 → Hunter Agent 從退貨評論反向定義爆款</p>
+                    </div>
+                    <div style="background:linear-gradient(180deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:14px;padding:1.5rem;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                        <div style="font-size:1.5rem;margin-bottom:0.4rem;">🐾</div>
+                        <div style="color:#a3e635;font-weight:700;font-size:1.05rem;">寵物食品</div>
+                        <p style="color:#cbd5e1;font-size:0.92rem;line-height:1.6;margin:0.5rem 0 0 0;">肉粉/穀物國際行情 → 成本預警 + 配方替代建議<br>訂閱箱/獸醫/電商多通路 → 機能配方迭代由輿情驅動</p>
+                    </div>
+                    <div style="background:linear-gradient(180deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:14px;padding:1.5rem;transition:all 0.3s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                        <div style="font-size:1.5rem;margin-bottom:0.4rem;">🚲</div>
+                        <div style="color:#22d3ee;font-weight:700;font-size:1.05rem;">電動自行車 / 滑板車</div>
+                        <p style="color:#cbd5e1;font-size:0.92rem;line-height:1.6;margin:0.5rem 0 0 0;">鋰電池/鋁合金/馬達成本 → 以租代買 + 軟體訂閱模式<br>共享平台/經銷/官網 → 差異化服務包不動硬體售價</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slide-view" id="slide-6">
+                <h2>C-Suite 實時推演控制台</h2>
+                <p class="subtitle" style="max-width:none;">我們以人人皆知的「洋芋片（民生快消品）」作為原型驗證（PoC），展示系統如何從「棕櫚油暴漲（上游）」推演出「D2C 官網閃卡綑綁包（現在）」，並反向定義出「不沾手玩家碎星洋芋片（未來）」的商業全閉環。本系統之底層框架具備極高規模化潛力，能無縫複製至智慧汽車、消費性電子與醫療器材等數兆美元規模之實體產業。</p>
+                <a href="demo.html" target="_blank" style="display:inline-block;margin-top:2rem;padding:1rem 2.5rem;background:linear-gradient(135deg,#2563eb,#7c3aed);color:white;font-weight:700;font-size:1.1rem;border-radius:12px;text-decoration:none;transition:all 0.3s;">
+                    🚀 開啟 PoC 互動控制台 →
+                </a>
+                <p style="color:#64748b;font-size:0.8rem;margin-top:1rem;">包含 8 種供應鏈事件自動觸發 + Multi-Agent 推演 + Human-in-the-Loop 核准部署</p>
+                <div style="margin-top:2rem;background:#0f172a;border:1px solid #334155;border-left:4px solid #f59e0b;border-radius:10px;padding:1rem 1.2rem;">
+                    <div style="color:#fbbf24;font-size:0.88rem;font-weight:700;margin-bottom:0.4rem;">📐 實務部署：雙頻策略架構</div>
+                    <p style="color:#94a3b8;font-size:0.88rem;line-height:1.6;margin:0;">PoC 展示為加速演示採用即時觸發。實務部署採用<strong style="color:#cbd5e1;">雙頻策略</strong>：市場信號層（即時）提供 Early Warning 預警通知；成本決策層（月/季）對接企業 BOM 結算週期，產出戰略成本修正建議。兩層協作確保既不漏接黑天鵝事件，又貼合企業實際財務節奏。</p>
+                </div>
+                <div style="margin-top:1.2rem;text-align:center;">
+                    <button onclick="document.getElementById('reality-box').style.display=document.getElementById('reality-box').style.display==='none'?'block':'none'" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:0.5rem 1.2rem;border-radius:8px;cursor:pointer;font-size:0.75rem;font-weight:600;transition:all 0.2s;" onmouseover="this.style.color='#fbbf24';this.style.borderColor='#f59e0b'" onmouseout="this.style.color='#94a3b8';this.style.borderColor='#334155'">📐 商業化落地：困境與因應之道 ▼</button>
+                </div>
+                <div id="reality-box" style="display:none;margin-top:1rem;border:1px solid #334155;border-radius:12px;padding:1.2rem;background:#0f172a;animation:slideUp 0.4s ease;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+                        <div style="background:#1c1017;border:1px solid #7f1d1d;border-radius:8px;padding:0.7rem;"><div style="color:#fca5a5;font-weight:600;font-size:0.72rem;">❌ BOM 非即時，長約鎖價</div><p style="color:#64748b;font-size:0.68rem;line-height:1.5;margin:0.2rem 0 0 0;">期貨暴漲 ≠ 實質成本漲，多數企業已簽半年長約。</p></div>
+                        <div style="background:#0f2920;border:1px solid #065f46;border-radius:8px;padding:0.7rem;"><div style="color:#6ee7b7;font-weight:600;font-size:0.72rem;">✅ 雙頻策略</div><p style="color:#64748b;font-size:0.68rem;line-height:1.5;margin:0.2rem 0 0 0;">即時層 Early Warning，月/季層對接 BOM 修正。</p></div>
+                        <div style="background:#1c1017;border:1px solid #7f1d1d;border-radius:8px;padding:0.7rem;"><div style="color:#fca5a5;font-weight:600;font-size:0.72rem;">❌ ERP 系統孤島</div><p style="color:#64748b;font-size:0.68rem;line-height:1.5;margin:0.2rem 0 0 0;">SAP 舊版複雜，資料清洗成本高於短期利潤。</p></div>
+                        <div style="background:#0f2920;border:1px solid #065f46;border-radius:8px;padding:0.7rem;"><div style="color:#6ee7b7;font-weight:600;font-size:0.72rem;">✅ 輕量對接</div><p style="color:#64748b;font-size:0.68rem;line-height:1.5;margin:0.2rem 0 0 0;">Phase 1 用 Excel（合約到期日+鎖價），後續漸進整合。</p></div>
+                        <div style="background:#1c1017;border:1px solid #7f1d1d;border-radius:8px;padding:0.7rem;"><div style="color:#fca5a5;font-weight:600;font-size:0.72rem;">❌ 綑綁包無法全自動</div><p style="color:#64748b;font-size:0.68rem;line-height:1.5;margin:0.2rem 0 0 0;">庫存備料、包裝設計、通路合約審查仍需人工。</p></div>
+                        <div style="background:#0f2920;border:1px solid #065f46;border-radius:8px;padding:0.7rem;"><div style="color:#6ee7b7;font-weight:600;font-size:0.72rem;">✅ AI 推薦 + 人工落地</div><p style="color:#64748b;font-size:0.68rem;line-height:1.5;margin:0.2rem 0 0 0;">策略推薦引擎，自動化限縮 D2C 可控通路。</p></div>
+                        <div style="background:#1c1017;border:1px solid #7f1d1d;border-radius:8px;padding:0.7rem;"><div style="color:#fca5a5;font-weight:600;font-size:0.72rem;">❌ 新品 PRD 難直接採用</div><p style="color:#64748b;font-size:0.68rem;line-height:1.5;margin:0.2rem 0 0 0;">AI PRD 品質不穩，R&D 不信任，驗證週期長。</p></div>
+                        <div style="background:#0f2920;border:1px solid #065f46;border-radius:8px;padding:0.7rem;"><div style="color:#6ee7b7;font-weight:600;font-size:0.72rem;">✅ PM 靈感工具</div><p style="color:#64748b;font-size:0.68rem;line-height:1.5;margin:0.2rem 0 0 0;">痛點報告供參考，先建信任再擴大 AI 權重。</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+const titles=["01 . 項目摘要","02 . 行業結構痛點","03 . 系統核心價值","04 . 技術架構","05 . 企業級防禦防線","06 . 跨產業商業應用","07 . PoC Demo"];
+function switchSlide(i){document.querySelectorAll('.nav-item').forEach((b,x)=>b.classList.toggle('active-nav',x===i));document.querySelectorAll('.slide-view').forEach((v,x)=>v.classList.toggle('active-view',x===i));document.getElementById('top-title').innerText=titles[i];}
+</script>
+</body>
+</html>

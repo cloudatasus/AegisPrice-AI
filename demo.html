@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>🛡️ AegisPrice AI — PoC 控制台</title>
+<style>
+:root{--bg:#020617;--card:#0f172a;--border:#1e293b;--accent:#3b82f6;--success:#10b981;--danger:#ef4444;--warn:#f59e0b;--text:#f8fafc;--muted:#64748b;}
+*{box-sizing:border-box;}
+body{font-family:-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:2rem;min-height:100vh;}
+h1{font-size:1.6rem;font-weight:800;margin:0 0 0.3rem 0;}
+.sub{color:#94a3b8;font-size:0.9rem;margin-bottom:1.5rem;}
+.back{color:var(--accent);text-decoration:none;font-size:0.8rem;font-weight:600;display:inline-block;margin-bottom:1rem;}
+.back:hover{text-decoration:underline;}
+
+.evt-bar{display:flex;gap:0.5rem;margin-bottom:1.2rem;flex-wrap:wrap;}
+.evt-tag{font-size:0.75rem;padding:0.4rem 0.8rem;border-radius:6px;background:#1e293b;color:#64748b;border:1px solid #334155;font-weight:600;transition:all 0.3s;cursor:default;}
+.evt-tag:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+.evt-tag.active{background:#0f2920;color:#6ee7b7;border-color:#065f46;animation:pulse 1.5s infinite;}
+.evt-tag.done{background:#334155;color:#94a3b8;border-color:#475569;text-decoration:line-through;opacity:0.6;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0.4);}50%{box-shadow:0 0 12px 4px rgba(16,185,129,0.15);}}
+
+.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;}
+.status-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem;}
+.sbox{background:var(--bg);padding:1rem;border-radius:10px;border:1px solid var(--border);border-left:4px solid #475569;transition:all 0.3s;}
+.sbox:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,0.4);}
+.sbox.alert{border-left-color:var(--danger);animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.6;}}
+.sbox small{color:var(--muted);font-size:0.72rem;font-weight:600;}
+.sbox span{display:block;font-size:1.2rem;font-weight:800;margin-top:0.2rem;}
+
+.log{background:#010205;padding:1rem;border-radius:10px;font-family:monospace;font-size:0.78rem;color:#38bdf8;height:180px;overflow-y:auto;border:1px solid var(--border);scroll-behavior:smooth;margin-bottom:1rem;}
+.actions{display:none;animation:up 0.5s ease forwards;}
+#hunter{display:none;margin-top:1rem;background:linear-gradient(135deg,#1a0f33,#0f172a);border:1px solid #6d28d9;border-radius:12px;padding:1.5rem;animation:up 0.6s ease forwards;}
+@keyframes up{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+.plan{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:1rem;margin:0.7rem 0;opacity:0;animation:planIn 0.4s ease forwards;transition:all 0.2s;}
+.plan:nth-child(1){animation-delay:0s;}.plan:nth-child(2){animation-delay:0.15s;}.plan:nth-child(3){animation-delay:0.3s;}
+.plan:hover{transform:translateX(3px);}
+@keyframes planIn{from{opacity:0;transform:translateX(-10px);}to{opacity:1;transform:translateX(0);}}
+.plan button{transition:all 0.2s;} .plan button:hover{transform:scale(1.05);box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+</style>
+</head>
+<body>
+<a href="index.html" class="back">← 返回簡報</a>
+<h1>🛡️ AegisPrice AI — C-Suite 實時推演控制台</h1>
+<p class="sub">系統持續背景監控，異常事件依序觸發 Multi-Agent 推演，主管擇優核准後一鍵部署。</p>
+
+<div class="evt-bar" id="timeline"></div>
+
+<div class="panel">
+    <div class="status-row">
+        <div class="sbox" id="box-up"><small>[MCP 1] 上游原物料</small><span id="txt-up">正常</span></div>
+        <div class="sbox" id="box-mg"><small>[MCP 2] 即時毛利率</small><span id="txt-mg">26 %</span></div>
+        <div class="sbox" id="box-mem"><small>[MCP 3] RAG 記憶庫</small><span id="txt-mem">已就緒</span></div>
+    </div>
+    <div class="log" id="log">[System] AegisPrice AI 已啟動，Agent 網絡背景監控中...</div>
+    <div class="actions" id="acts"><h4 id="act-title" style="margin:0 0 0.5rem 0;color:white;"></h4><div id="plans"></div></div>
+    <div id="hunter"><div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.8rem;"><span style="font-size:1.3rem;">🎯</span><div><div style="color:#c4b5fd;font-weight:700;font-size:0.9rem;">Hunter Agent — 定價壓力測試報告</div><div style="color:#64748b;font-size:0.72rem;">3 品項連續 2 季失敗 → Reflection → 輿情 6,000 則 → 新品 PRD</div></div></div><div id="hunter-plans"></div></div>
+</div>
+
+<script>
+const log=document.getElementById('log'),txtUp=document.getElementById('txt-up'),txtMg=document.getElementById('txt-mg'),txtMem=document.getElementById('txt-mem'),boxUp=document.getElementById('box-up'),boxMg=document.getElementById('box-mg'),acts=document.getElementById('acts'),actTitle=document.getElementById('act-title'),plans=document.getElementById('plans');
+let interval=null,idx=0,triggered=false,evtIdx=0;
+
+const mLogs=["[MCP 1] 棕櫚油 $842/噸（穩定），馬鈴薯 €218/噸","[MCP 2] Shopify 轉化率 3.2%，購物車放棄率 67%","[MCP 2] 全聯/7-11 銷量 +2.1%，符合預期","[MCP 3] RAG 記憶庫 OK，47 筆向量","[MCP 1] 產區氣候正常，無颱風預警","[MCP 2] D2C 活躍率 18.4%，開信率 22%","[MCP 1] 天然氣 €34.2/MWh（正常）","[MCP 3] 輿情掃描：24h 無異常","[MCP 2] 庫存周轉 14.3 天（健康）","[MCP 1] EUR/USD 1.087（<0.5%）","[MCP 2] 競品掃描：樂事/品客 無調價","[MCP 1] BOM 毛利率 ≥22%（安全）","[MCP 2] Ads CPC $0.42，ROAS 4.1x"];
+
+const events=[
+{tag:"🚨 棕櫚油暴漲",trigger:"🚨 [MCP 1] 棕櫚油突破 $1,100/噸（+30%），毛利跌破 15%！",escalate:"[溯源成本 Agent] 熔斷啟動！移交商務 Agent...<br>[商務 Agent] 產出 3 套方案：",up:"🚨 棕櫚油 +30%",mg:"11 % ⚠️",mem:"0 筆相似",title:"💡 洋芋片利潤防禦",plans:[{n:"方案 A：動漫聯名珍藏箱",d:"D2C 推 $590 初音限定箱（8包+閃卡+3月免運）<br><em>轉化率 +45%，毛利回 24%</em>",r:"低風險",c:"#10b981"},{n:"方案 B：會員積點加速",d:"線上「雙倍積點月」+ 滿額贈試吃包<br><em>回購率 +30%，毛利回 19%</em>",r:"極低風險",c:"#3b82f6"},{n:"方案 C：隱性縮量",d:"$59 不變，100g→90g（需法規審查）<br><em>毛利回 22%，有反彈風險</em>",r:"中風險",c:"#f59e0b"}]},
+{tag:"📉 銷量斷崖",trigger:"📉 [MCP 2] 通路銷量連 3 週 -18%，觸發營收預警！",escalate:"[RAG] 2 筆相似案例命中<br>[商務 Agent] 結合歷史產出方案：",up:"正常",mg:"24% ↓",mem:"🔍 2 筆相似",title:"📉 銷量反攻",plans:[{n:"方案 A：跨界聯名快閃",d:"手搖飲聯名 7 天限定，僅 D2C<br><em>聲量 +200%，全品線 +35%</em>",r:"中風險",c:"#f59e0b"},{n:"方案 B：訂閱零食箱",d:"月訂 $299 驚喜箱<br><em>LTV 2.8x，穩定營收</em>",r:"低風險",c:"#10b981"},{n:"方案 C：KOL + 復刻",d:"復刻海苔起司 + 10 KOL 開箱<br><em>互動 +150%，客單價 +40%</em>",r:"低風險",c:"#3b82f6"}]},
+{tag:"🔥 公關危機",trigger:"🔥 [MCP 3] Threads「異物」貼文 24h 8,000 轉發！",escalate:"[RAG] 3 筆公關案例命中<br>[商務 Agent] 止血方案：",up:"正常",mg:"26 %",mem:"🔍 3 筆危機",title:"🔥 品牌公關止血",plans:[{n:"方案 A：72h 極速回應",d:"CEO 道歉 + 下架 + 雙倍退款<br><em>負面 85%→30%</em>",r:"緊迫",c:"#ef4444"},{n:"方案 B：工廠直播",d:"48h 產線直播 + KOL 參觀<br><em>信任度 +25%</em>",r:"中風險",c:"#f59e0b"},{n:"方案 C：受災戶 VIP",d:"投訴者轉「品質大使」+ 年度試吃<br><em>轉推薦率 40%</em>",r:"低風險",c:"#10b981"}]},
+{tag:"🌊 極端氣候",trigger:"🌊 [MCP 1] 歐洲乾旱，馬鈴薯產區減產 40%！",escalate:"[溯源成本 Agent] 原料斷供風險！<br>[商務 Agent] 替代方案：",up:"🚨 減產 40%",mg:"16 % ⚠️",mem:"0 筆相似",title:"🌊 原料斷供替代",plans:[{n:"方案 A：地瓜/芋頭限定",d:"國產替代「台味限定」系列<br><em>成本 -35%，銷量 +20%</em>",r:"中風險",c:"#f59e0b"},{n:"方案 B：南美備援採購",d:"智利/阿根廷供應商鎖 6 月約<br><em>供貨 85%，成本 +8%</em>",r:"低風險",c:"#10b981"},{n:"方案 C：飢餓行銷",d:"停低毛利品項，主力限量供應<br><em>客單價 +25%，毛利回 23%</em>",r:"低風險",c:"#3b82f6"}]},
+{tag:"🏪 競品突襲",trigger:"🏪 [MCP 2] 樂事推同款口味低 15%，搶位中！",escalate:"[MCP 2] 直接對標偵測<br>[商務 Agent] 差異化反擊：",up:"正常",mg:"26% 受壓",mem:"🔍 1 筆相似",title:"🏪 競品反擊",plans:[{n:"方案 A：地區限定閃電戰",d:"48h 上架 3 款地區口味<br><em>話題 +180%，注意力回流</em>",r:"中風險",c:"#f59e0b"},{n:"方案 B：會員護城河",d:"D2C「買一送一盲盒」+ 積點 3 倍<br><em>回購 +55%</em>",r:"低風險",c:"#10b981"},{n:"方案 C：盲測挑戰",d:"KOL 實測本品 vs 競品<br><em>好感 +30%，自然流量 +90%</em>",r:"低風險",c:"#3b82f6"}]},
+{tag:"📦 物流中斷",trigger:"📦 [MCP 1] 高雄港罷工第 3 天，原料卡關！",escalate:"[溯源成本 Agent] 庫存剩 12 天<br>[商務 Agent] 物流應急：",up:"🚨 港口罷工",mg:"26 %",mem:"🔍 1 筆相似",title:"📦 物流應急",plans:[{n:"方案 A：台中港 + 空運",d:"40% 改走台中港，急件空運<br><em>延遲縮至 3 天，成本 +12%</em>",r:"中風險",c:"#f59e0b"},{n:"方案 B：D2C 優先配額",d:"暫停低效通路，優先官網+超商<br><em>毛利 24%，官網佔比 40%</em>",r:"低風險",c:"#10b981"},{n:"方案 C：預購制",d:"缺貨預購 + 到貨通知<br><em>轉化率 62%，忠誠不流失</em>",r:"極低風險",c:"#3b82f6"}]},
+{tag:"🧾 法規變動",trigger:"🧾 [MCP 3] 衛福部：含鈉超標須警語，6 月緩衝！",escalate:"[MCP 3] 法規新規解析完成<br>[商務 Agent] 合規 + 商機：",up:"正常",mg:"26 %",mem:"法規已解析",title:"🧾 法規合規",plans:[{n:"方案 A：搶先減鈉行銷",d:"3 月全品線減鈉 30%，掛低鈉標章<br><em>健康貨架搶佔，形象 +40%</em>",r:"中風險",c:"#f59e0b"},{n:"方案 B：分階段調整",d:"先改主力 3 品（60% 營收），分批跟進<br><em>成本分攤，無大支出</em>",r:"低風險",c:"#10b981"},{n:"方案 C：新子品牌",d:"推「零負擔」獨立品牌<br><em>法規紅利，定價 $89</em>",r:"低風險",c:"#3b82f6"}]},
+{tag:"💸 匯率暴跌",trigger:"💸 [MCP 1] 台幣兌美元週貶 5%，進口成本飆升！",escalate:"[溯源成本 Agent] BOM 全面上修<br>[商務 Agent] 匯率避險策略：",up:"🚨 TWD 貶 5%",mg:"18 % ⚠️",mem:"🔍 2 筆案例",title:"💸 匯率應對",plans:[{n:"方案 A：遠期鎖匯",d:"鎖定 6 月買匯價位<br><em>避損 3%，年省 ¥1,200 萬</em>",r:"低風險",c:"#10b981"},{n:"方案 B：本土化採購",d:"國產比例 30%→60%<br><em>美元曝險 -50%</em>",r:"中風險",c:"#f59e0b"},{n:"方案 C：官網微調 +$5",d:"D2C +$5，通路原價讓利換長約<br><em>官網毛利回 22%</em>",r:"低風險",c:"#3b82f6"}]}
+];
+
+// 建立 timeline tags
+const timeline=document.getElementById('timeline');
+events.forEach((e,i)=>{const d=document.createElement('div');d.className='evt-tag';d.id='tag-'+i;d.textContent=e.tag;timeline.appendChild(d);});
+
+function start(){
+    stop();triggered=false;acts.style.display="none";
+    boxUp.classList.remove('alert');boxMg.classList.remove('alert');
+    txtUp.innerText="正常";txtMg.innerText="26 %";txtMem.innerText="已就緒";
+    log.innerHTML="[System] AegisPrice AI 背景監控中...";idx=0;
+    interval=setInterval(()=>{
+        if(triggered)return;
+        const t=`<span style="color:#475569">[${new Date().toLocaleTimeString('zh-TW',{hour12:false})}]</span>`;
+        log.innerHTML+=`<br>${t} ${mLogs[idx%mLogs.length]}`;idx++;log.scrollTop=log.scrollHeight;
+        if(idx>=6&&!triggered)fire();
+    },2500);
+}
+
+function fire(){
+    if(evtIdx>=events.length){setTimeout(showHunter,2000);return;}
+    triggered=true;const e=events[evtIdx];
+    document.getElementById('tag-'+evtIdx).classList.add('active');
+    setTimeout(()=>{
+        log.innerHTML+=`<br><br><span style="color:#ef4444;font-weight:700">${e.trigger}</span>`;log.scrollTop=log.scrollHeight;
+        if(e.up.includes('🚨'))boxUp.classList.add('alert');
+        if(e.mg.includes('⚠️'))boxMg.classList.add('alert');
+        txtUp.innerText=e.up;txtMg.innerText=e.mg;txtMem.innerText=e.mem;
+    },1000);
+    setTimeout(()=>{log.innerHTML+=`<br><span style="color:#38bdf8">${e.escalate}</span>`;log.scrollTop=log.scrollHeight;},3500);
+    setTimeout(()=>{
+        acts.style.display="block";actTitle.innerText=e.title;
+        plans.innerHTML=e.plans.map(p=>`<div class="plan" style="border-left:4px solid ${p.c};"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;"><strong style="color:white;font-size:0.88rem;">${p.n}</strong><span style="font-size:0.68rem;padding:0.2rem 0.5rem;border-radius:4px;background:${p.c}22;color:${p.c};font-weight:600;">${p.r}</span></div><p style="margin:0;color:#cbd5e1;font-size:0.82rem;line-height:1.5;">${p.d}</p><button onclick="approve(this,'${p.n.replace(/'/g,"\\'")}')" style="margin-top:0.5rem;background:${p.c};color:white;border:none;padding:0.4rem 0.8rem;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.76rem;">核准此方案 ✓</button></div>`).join('');
+    },5500);
+}
+
+function approve(btn,name){
+    plans.querySelectorAll('button').forEach(b=>{b.disabled=true;b.style.opacity='0.3';});
+    btn.style.opacity='1';btn.innerText='⏳ 部署中...';
+    log.innerHTML+=`<br><span style="color:#10b981;font-weight:700">[Human-in-the-Loop] ✓ 核准「${name}」</span>`;log.scrollTop=log.scrollHeight;
+    setTimeout(()=>{log.innerHTML+=`<br>[MCP 2] 🛍️ API 成功，方案已部署`;log.scrollTop=log.scrollHeight;},800);
+    setTimeout(()=>{log.innerHTML+=`<br>[MCP 2] ✉️ 推播完成`;log.scrollTop=log.scrollHeight;},1500);
+    setTimeout(()=>{log.innerHTML+=`<br>[MCP 3] 💾 寫入 RAG`;txtMem.innerText="✓ +1 筆";log.scrollTop=log.scrollHeight;},2200);
+    setTimeout(()=>{
+        log.innerHTML+=`<br><span style="color:#10b981">[System] 🚀 部署完成！</span>`;btn.innerText='✅ 已部署';log.scrollTop=log.scrollHeight;
+        document.getElementById('tag-'+evtIdx).classList.replace('active','done');
+        evtIdx++;
+        if(evtIdx>=events.length)setTimeout(showHunter,3000);
+        else setTimeout(start,8000);
+    },3000);
+}
+
+function showHunter(){
+    stop();acts.style.display="none";
+    log.innerHTML+=`<br><br><span style="color:#c4b5fd;font-weight:700">[Hunter Agent] 排程壓力測試完成。3 品項連續 2 季失敗，Reflection 啟動...</span>`;
+    log.innerHTML+=`<br><span style="color:#c4b5fd">[MCP 3] 6,000 則負評語意聚類完成，3 個市場真空帶 ↓</span>`;
+    log.scrollTop=log.scrollHeight;txtMem.innerText="輿情 6,000 則";
+    const h=document.getElementById('hunter');h.style.display="block";
+    const hp=document.getElementById('hunter-plans');
+    const prds=[{n:"不沾手 Gamer 碎星洋芋片",d:"痛點「手油」2,100 則。凍乾+單手傾倒<br><em>18-28 電競，$69，毛利 42%</em>",c:"#10b981"},{n:"銀髮低鈉養生脆片",d:"痛點「太鹹/咬不動」1,800 則。減鈉60%+即化<br><em>55+ 銀髮，$79，健康藍海</em>",c:"#3b82f6"},{n:"可食用包裝洋芋片",d:"痛點「塑膠罪惡」900 則。海藻外膜零塑膠<br><em>Z 世代，$89，綠色溢價 +50%</em>",c:"#818cf8"}];
+    hp.innerHTML=prds.map(p=>`<div class="plan" style="border-left:4px solid ${p.c};"><strong style="color:white;font-size:0.85rem;">${p.n}</strong><p style="margin:0.3rem 0 0 0;color:#cbd5e1;font-size:0.8rem;line-height:1.5;">${p.d}</p></div>`).join('');
+}
+
+function stop(){if(interval){clearInterval(interval);interval=null;}}
+start();
+</script>
+</body>
+</html>
